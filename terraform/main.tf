@@ -13,6 +13,33 @@ provider "google" {
   zone    = "us-central1-c"
 }
 
+resource "google_compute_network" "mynetwork" {
+  name                    = "mynetwork"
+  auto_create_subnetworks = true
+}
+
+resource "google_compute_firewall" "web-rules" {
+  name = "allow-web-traffic"
+  network = google_compute_network.mynetwork.name
+  source_ranges = ["0.0.0.0/0"]
+
+  allow {
+    protocol = "tcp"
+    ports = ["80", "443"]
+  }
+}
+
+resource "google_compute_firewall" "ssh-rules" {
+  name = "allow-ssh"
+  network = google_compute_network.mynetwork.name
+  source_ranges = ["0.0.0.0/0"]
+
+  allow {
+    protocol = "tcp"
+    ports = ["22"]
+  }
+}
+
 resource "google_compute_instance" "web-server" {
   name         = "web-server"
   machine_type = "e2-micro"
@@ -26,7 +53,7 @@ resource "google_compute_instance" "web-server" {
   }
 
   network_interface {
-    network = "default"
+    network = google_compute_network.mynetwork.name
     access_config {}
   }
 }
